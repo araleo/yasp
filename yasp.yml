@@ -1,0 +1,17 @@
+# Yasp Configuration File
+# Please don't use - in front of properties
+# as I yet don't know a way to make them supported
+# by the package used to unmarshall this file.
+
+ignore:
+  path: ./
+  file: .yaspignore
+
+print:
+  commands: console.log(),print(),fmt.Println()
+
+todos:
+  commands: TODO
+
+issues:
+  commands: TODO!
