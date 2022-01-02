@@ -51,17 +51,17 @@ func main() {
 	}
 
 	if command == "print" || command == "diag" {
-		fmt.Println("\nI found these print statements in the code:")
+		fmt.Println("\nI found these \033[35mprint\033[0m statements in the code:")
 		walkDir(rootDir, ignoredNames, regexMap["print"], false)
 	}
 
 	if command == "todo" || command == "diag" {
-		fmt.Println("\nI found these todo statements in the code:")
+		fmt.Println("\nI found these \033[35mtodo\033[0m statements in the code:")
 		walkDir(rootDir, ignoredNames, regexMap["todos"], false)
 	}
 
-	if command == "env" {
-		fmt.Println("\nChecking env files and variables...")
+	if command == "env" || command == "diag" {
+		fmt.Println("\nChecking \033[35menv\033[0m files and variables...")
 		checkEnvs(&config)
 	}
 
@@ -71,7 +71,7 @@ func main() {
 	}
 
 	if command == "snitch" {
-		fmt.Println("\nI found these unreported issues:")
+		fmt.Println("\nReporting these unreported issues:")
 		walkDir(rootDir, ignoredNames, regexMap["issues"], true)
 	}
 
@@ -96,9 +96,10 @@ func parseFlags(config *Config) (string, string, []string) {
 // checkEnvs checks all envs specified in the yasp config file for their respective config files.
 func checkEnvs(config *Config) {
 	for envName, envConfigs := range config.Env {
-		fmt.Println("Checking " + envName)
 		ok := parse.CheckEnv(envConfigs)
-		fmt.Println(ok)
+		if ok {
+			fmt.Println(envName + " env files seem ok.")
+		}
 	}
 }
 
@@ -114,9 +115,11 @@ func searchForPattern(filepath string, pattern *regexp.Regexp, snitch bool) {
 	scanner := bufio.NewScanner(file)
 	for line := 1; scanner.Scan(); {
 		lineText := strings.TrimSpace(scanner.Text())
-		matched := pattern.MatchString(lineText)
-		if matched {
-			fmt.Println(path.Join(dirName, fileName), line, lineText)
+		matched := pattern.FindString(lineText)
+
+		if matched != "" {
+			coloredLine := strings.ReplaceAll(lineText, matched, "\033[35m"+matched+"\033[0m")
+			fmt.Println(path.Join(dirName, fileName), line, coloredLine)
 			if snitch {
 				reportIssue(lineText)
 			}
