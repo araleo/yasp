@@ -50,6 +50,11 @@ func main() {
 		printDir(rootDir, &depth, ignoredNames)
 	}
 
+	if command == "env" || command == "diag" {
+		fmt.Println("\nChecking \033[35menv\033[0m files and variables...")
+		checkEnvs(&config)
+	}
+
 	if command == "print" || command == "diag" {
 		fmt.Println("\nI found these \033[35mprint\033[0m statements in the code:")
 		walkDir(rootDir, ignoredNames, regexMap["print"], false)
@@ -58,11 +63,6 @@ func main() {
 	if command == "todo" || command == "diag" {
 		fmt.Println("\nI found these \033[35mtodo\033[0m statements in the code:")
 		walkDir(rootDir, ignoredNames, regexMap["todos"], false)
-	}
-
-	if command == "env" || command == "diag" {
-		fmt.Println("\nChecking \033[35menv\033[0m files and variables...")
-		checkEnvs(&config)
 	}
 
 	if command == "issues" {
@@ -74,7 +74,6 @@ func main() {
 		fmt.Println("\nReporting these unreported issues:")
 		walkDir(rootDir, ignoredNames, regexMap["issues"], true)
 	}
-
 }
 
 // parseFlags parses the flags provided by the user and returns their respective values
@@ -136,8 +135,7 @@ func reportIssue(lineText string) int {
 	return createdId
 }
 
-// walkDir walks through the received directory and all it's subdirectories, excluding the
-// ones in the ignored slice checking for occurrences of pattern in every file found.
+// walkDir recursively walks through the received directory checking for occurrences of pattern in every file found.
 func walkDir(dirPath string, ignored []string, regexString string, snitch bool) {
 	files := getFiles(dirPath, ignored)
 

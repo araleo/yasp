@@ -10,12 +10,11 @@ import (
 var HELPERS = map[string]string{
 	"dir":     "Please enter the absolute path of a directory or a dot to use the cwd.",
 	"ignore":  "Please enter the name of the ignore like file or a dot to use the default.",
-	"command": "Please enter a command to run: ls, print, todo, diag, issues, snitch",
+	"command": "Please enter a command to run: ls, print, todo, env, diag, issues, snitch",
 }
 
 // ParseFlags declares and parses the flags accepted by the program
 // and returns a map in which the keys are flags' names and values pointers to their content.
-// TODO add a flag for the desired operation
 func ParseFlags() map[string]*string {
 	dirFlag := flag.String("d", "", HELPERS["dir"])
 	ignoreFlag := flag.String("i", "", HELPERS["ignore"])

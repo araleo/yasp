@@ -6,6 +6,7 @@ Yasp is a simplified snitch cli tool to help with code maitenance, heavily inspi
 
 * Pretty print a directory file structure.
 * Print all prints and todos statements found within the code.
+* Checks if projects env files are present and filled.
 * List open issues found in GitLab and submit new ones.
 * Supports ignore like files to ignore files and directories for all commands.
 * Customization of print, todos and issues commands.
@@ -25,9 +26,10 @@ go build .
 Available commands:
 
 * ls: pretty prints the directory file structure.
+* env: checks if projects env files are present, with the correct variables declared and filled.
 * print: prints all the print statements found within the directory files.
 * todo: prints all the todo statements.
-* diag: prints both the print and todo statements.
+* diag: runs the env, print and todo commands.
 * issues: prints project's GitLab issues.
 * snitch: finds every instance of TODO! in the code and submits it as a new GitLab issue.
 
