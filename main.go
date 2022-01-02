@@ -29,6 +29,7 @@ type Config struct {
 	Issues struct {
 		Commands string
 	}
+	Env map[string]parse.EnvConfig
 }
 
 const PREFIX = "|_ "
@@ -59,6 +60,11 @@ func main() {
 		walkDir(rootDir, ignoredNames, regexMap["todos"], false)
 	}
 
+	if command == "env" {
+		fmt.Println("\nChecking env files and variables...")
+		checkEnvs(&config)
+	}
+
 	if command == "issues" {
 		fmt.Println("\nCurrent GitLab issues:")
 		git.ListIssues()
@@ -85,6 +91,15 @@ func parseFlags(config *Config) (string, string, []string) {
 	ignoredNames := loadIgnore(ignoreFile)
 
 	return rootDir, command, ignoredNames
+}
+
+// checkEnvs checks all envs specified in the yasp config file for their respective config files.
+func checkEnvs(config *Config) {
+	for envName, envConfigs := range config.Env {
+		fmt.Println("Checking " + envName)
+		ok := parse.CheckEnv(envConfigs)
+		fmt.Println(ok)
+	}
 }
 
 // searchForPattern receives a filepath as a string and returns all ocourrences of pattern in the content of the file

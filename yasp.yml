@@ -15,3 +15,9 @@ todos:
 
 issues:
   commands: TODO!
+
+env:
+  global:
+    path: .
+    file: .env
+    vars: GITLAB_TOKEN,GITLAB_API_URL,GITLAB_PROJECT_ID
