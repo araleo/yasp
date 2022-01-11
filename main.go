@@ -34,6 +34,7 @@ type Config struct {
 
 const PREFIX = "|_ "
 
+// TODO go through the tree only once while searching for todos and prints and not twice as it is now.
 func main() {
 	parse.LoadDotEnv()
 	git.LoadConfig()
@@ -50,29 +51,44 @@ func main() {
 		printDir(rootDir, &depth, ignoredNames)
 	}
 
-	if command == "env" || command == "diag" {
+	if command == "diag" {
+		lines := 0
+
+		fmt.Println("\nChecking \033[35menv\033[0m files and variables...")
+		checkEnvs(&config)
+
+		fmt.Println("\nI found these \033[35mprint\033[0m statements in the code:")
+		walkDir(rootDir, ignoredNames, regexMap["print"], false, &lines)
+
+		fmt.Println("\nI found these \033[35mtodo\033[0m statements in the code:")
+		walkDir(rootDir, ignoredNames, regexMap["todos"], false, nil)
+
+		fmt.Printf("\nFor this diagnosis I went through %d lines of code.\n", lines)
+	}
+
+	if command == "env" {
 		fmt.Println("\nChecking \033[35menv\033[0m files and variables...")
 		checkEnvs(&config)
 	}
 
-	if command == "print" || command == "diag" {
+	if command == "print" {
 		fmt.Println("\nI found these \033[35mprint\033[0m statements in the code:")
-		walkDir(rootDir, ignoredNames, regexMap["print"], false)
+		walkDir(rootDir, ignoredNames, regexMap["print"], false, nil)
 	}
 
-	if command == "todo" || command == "diag" {
+	if command == "todo" {
 		fmt.Println("\nI found these \033[35mtodo\033[0m statements in the code:")
-		walkDir(rootDir, ignoredNames, regexMap["todos"], false)
+		walkDir(rootDir, ignoredNames, regexMap["todos"], false, nil)
+	}
+
+	if command == "snitch" {
+		fmt.Println("\nReporting these unreported issues:")
+		walkDir(rootDir, ignoredNames, regexMap["issues"], true, nil)
 	}
 
 	if command == "issues" {
 		fmt.Println("\nCurrent GitLab issues:")
 		git.ListIssues()
-	}
-
-	if command == "snitch" {
-		fmt.Println("\nReporting these unreported issues:")
-		walkDir(rootDir, ignoredNames, regexMap["issues"], true)
 	}
 }
 
@@ -102,8 +118,16 @@ func checkEnvs(config *Config) {
 	}
 }
 
+// reportIssue receives a string in the todo <title> format submits it as an issue on Gitlab and returns the created issue iid.
+func reportIssue(lineText string) int {
+	issueTitle := strings.Split(lineText, "! ")[1]
+	formatedTitle := strings.ReplaceAll(issueTitle, " ", "%20")
+	createdId := git.CreateIssue(formatedTitle)
+	return createdId
+}
+
 // searchForPattern receives a filepath as a string and returns all ocourrences of pattern in the content of the file
-func searchForPattern(filepath string, pattern *regexp.Regexp, snitch bool) {
+func searchForPattern(filepath string, pattern *regexp.Regexp, snitch bool, lines *int) {
 	file, err := os.Open(filepath)
 	checkErr(err)
 	defer file.Close()
@@ -111,8 +135,9 @@ func searchForPattern(filepath string, pattern *regexp.Regexp, snitch bool) {
 	fileDir, fileName := path.Split(filepath)
 	dirName := path.Base(fileDir)
 
+	line := 1
 	scanner := bufio.NewScanner(file)
-	for line := 1; scanner.Scan(); {
+	for scanner.Scan() {
 		lineText := strings.TrimSpace(scanner.Text())
 		matched := pattern.FindString(lineText)
 
@@ -125,18 +150,14 @@ func searchForPattern(filepath string, pattern *regexp.Regexp, snitch bool) {
 		}
 		line++
 	}
-}
 
-// reportIssue receives a string in the todo <title> format submits it as an issue on Gitlab and returns the created issue iid.
-func reportIssue(lineText string) int {
-	issueTitle := strings.Split(lineText, "! ")[1]
-	formatedTitle := strings.ReplaceAll(issueTitle, " ", "%20")
-	createdId := git.CreateIssue(formatedTitle)
-	return createdId
+	if lines != nil {
+		*lines += line
+	}
 }
 
 // walkDir recursively walks through the received directory checking for occurrences of pattern in every file found.
-func walkDir(dirPath string, ignored []string, regexString string, snitch bool) {
+func walkDir(dirPath string, ignored []string, regexString string, snitch bool, lines *int) {
 	files := getFiles(dirPath, ignored)
 
 	pattern, err := regexp.Compile(regexString)
@@ -146,9 +167,9 @@ func walkDir(dirPath string, ignored []string, regexString string, snitch bool) 
 		filepath := path.Join(dirPath, file.Name())
 
 		if file.IsDir() {
-			walkDir(filepath, ignored, regexString, snitch)
+			walkDir(filepath, ignored, regexString, snitch, lines)
 		} else {
-			searchForPattern(filepath, pattern, snitch)
+			searchForPattern(filepath, pattern, snitch, lines)
 		}
 	}
 }
@@ -202,15 +223,6 @@ func checkIgnore(fileName string, ignored []string) bool {
 	return false
 }
 
-// loadConfig reads the yml config file and loads the data into the Config struct
-func loadConfig(config *Config) {
-	file, err := os.ReadFile("yasp.yml")
-	checkErr(err)
-
-	err = yaml.Unmarshal(file, config)
-	checkErr(err)
-}
-
 // loadIgnore reads the ignore like file and returns a slice where each element is a line in the read file.
 func loadIgnore(ignoreFileName string) []string {
 	if ignoreFileName == "" {
@@ -224,6 +236,15 @@ func loadIgnore(ignoreFileName string) []string {
 	fields = append(fields, ".yaspignore", "yasp.yml")
 
 	return fields
+}
+
+// loadConfig reads the yml config file and loads the data into the Config struct
+func loadConfig(config *Config) {
+	file, err := os.ReadFile("yasp.yml")
+	checkErr(err)
+
+	err = yaml.Unmarshal(file, config)
+	checkErr(err)
 }
 
 // TODO! Refactor error logging.
