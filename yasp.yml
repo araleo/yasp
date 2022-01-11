@@ -17,7 +17,20 @@ issues:
   commands: TODO!
 
 env:
-  global:
-    path: .
+  vultus:
+    path: C:\Users\Leonardo Mendes\vultus\vultus-one
     file: .env
-    vars: GITLAB_TOKEN,GITLAB_API_URL,GITLAB_PROJECT_ID
+    vars: GC_ENV,DB_PASSWORD,ROOT_PASSWORD
+    sep: '='
+  
+  customer.ini:
+    path: C:\Users\Leonardo Mendes\vultus\vultus-one\vultus-backend
+    file: customer.ini
+    vars: Name,URL,GVProjectKeys,BasicAuth,Secret,ElasticUrl
+    sep: ': '
+
+  uwsgi.ini:
+    path: C:\Users\Leonardo Mendes\vultus\vultus-one\vultus-backend
+    file: uwsgi.ini
+    vars: module,callable,master
+    sep: ' = '

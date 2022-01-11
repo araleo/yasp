@@ -55,3 +55,11 @@ GITLAB_TOKEN=<token>
 GITLAB_API_URL=https://gitlab.com/api/v4/projects
 GITLAB_PROJECT_ID=<project id>
 ```
+
+### Todos
+
+- [ ] Add relative imports to the env files in yasp.yml.
+- [x] Add custom separators to the env configs in yasp.yml.
+- [ ] Add descriptions to opened GitLab issues.
+- [ ] Improve regexes for more precision in the searches.
+- [ ] Improve performance.

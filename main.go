@@ -63,7 +63,7 @@ func main() {
 		fmt.Println("\nI found these \033[35mtodo\033[0m statements in the code:")
 		walkDir(rootDir, ignoredNames, regexMap["todos"], false, nil)
 
-		fmt.Printf("\nFor this diagnosis I went through %d lines of code.\n", lines)
+		fmt.Printf("\nFor this diagnosis I went through %d lines of code.\n\n", lines)
 	}
 
 	if command == "env" {
@@ -113,7 +113,7 @@ func checkEnvs(config *Config) {
 	for envName, envConfigs := range config.Env {
 		ok := parse.CheckEnv(envConfigs)
 		if ok {
-			fmt.Println(envName + " env files seem ok.")
+			fmt.Println(envName + " env file seem ok.")
 		}
 	}
 }

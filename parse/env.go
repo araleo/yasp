@@ -13,8 +13,10 @@ type EnvConfig struct {
 	Path string
 	File string
 	Vars string
+	Sep  string
 }
 
+// LoadDotEnv reads the .env file at the root level, parses it into the EnvConfig struct and sets the found values as environment variables.
 func LoadDotEnv() {
 	file, err := os.Open(".env")
 	if err != nil {
@@ -43,18 +45,9 @@ func CheckEnv(env EnvConfig) bool {
 	}
 
 	lines := strings.Split(string(file), "\n")
-	foundVars := make([]string, 0)
-	for _, line := range lines {
-		keyVal := strings.Split(line, "=")
-		if len(keyVal) != 2 {
-			fmt.Printf("Invalid value for variable %s in file %s\n", line, filepath)
-			return false
-		}
-		k := keyVal[0]
-		foundVars = append(foundVars, k)
-	}
-
+	foundVars := listFileVars(lines, env.Sep)
 	foundStr := strings.Join(foundVars, ",")
+
 	for _, expected := range expectedVars {
 		if !strings.Contains(foundStr, expected) {
 			fmt.Printf("Can't find the variable %s in the %s file\n", expected, filepath)
@@ -63,4 +56,17 @@ func CheckEnv(env EnvConfig) bool {
 	}
 
 	return true
+}
+
+// listFileVars receives the lines of an env file as a string sliceand the separator for keys and values and returns a string slice with the names of the keys.
+func listFileVars(lines []string, sep string) []string {
+	foundVars := make([]string, 0)
+	for _, line := range lines {
+		keyVal := strings.Split(line, sep)
+		if len(keyVal) == 2 {
+			k := keyVal[0]
+			foundVars = append(foundVars, k)
+		}
+	}
+	return foundVars
 }
