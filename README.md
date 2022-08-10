@@ -1,6 +1,6 @@
 # YASP - Yet Another Snitch Program
 
-Yasp is a simplified snitch cli tool to help with code maitenance, heavily inspired by (copied from) [/tsoding/snitch](https://github.com/tsoding/snitch). 
+Yasp is a simplified snitch cli tool to help with code maitenance, heavily inspired by (copied from) [/tsoding/snitch](https://github.com/tsoding/snitch).
 
 ## Features
 
@@ -20,7 +20,7 @@ The default directory is the cwd and the default ignore file is .yaspignore.
 ```
 go build .
 
-./snitch -c <command>
+./yasp -c <command>
 ```
 
 Available commands:

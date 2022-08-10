@@ -7,3 +7,4 @@ snitch
 __pycache__
 env
 data
+.yarn

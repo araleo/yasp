@@ -53,15 +53,20 @@ func main() {
 
 	if command == "diag" {
 		lines := 0
+		tests := 0
 
 		fmt.Println("\nChecking \033[35menv\033[0m files and variables...")
 		checkEnvs(&config)
 
 		fmt.Println("\nI found these \033[35mprint\033[0m statements in the code:")
-		walkDir(rootDir, ignoredNames, regexMap["print"], false, &lines)
+		walkDir(rootDir, ignoredNames, regexMap["print"], false, &lines, nil)
 
 		fmt.Println("\nI found these \033[35mtodo\033[0m statements in the code:")
-		walkDir(rootDir, ignoredNames, regexMap["todos"], false, nil)
+		walkDir(rootDir, ignoredNames, regexMap["todos"], false, nil, nil)
+
+		fmt.Println("\nI found these \033[35mtest files\033[0m in the code:")
+		walkDir(rootDir, ignoredNames, regexMap["todos"], false, nil, &tests)
+		fmt.Printf("\nA total of \033[35m%d test files\033[0m\n", tests)
 
 		fmt.Printf("\nFor this diagnosis I went through %d lines of code.\n\n", lines)
 	}
@@ -73,17 +78,24 @@ func main() {
 
 	if command == "print" {
 		fmt.Println("\nI found these \033[35mprint\033[0m statements in the code:")
-		walkDir(rootDir, ignoredNames, regexMap["print"], false, nil)
+		walkDir(rootDir, ignoredNames, regexMap["print"], false, nil, nil)
 	}
 
 	if command == "todo" {
 		fmt.Println("\nI found these \033[35mtodo\033[0m statements in the code:")
-		walkDir(rootDir, ignoredNames, regexMap["todos"], false, nil)
+		walkDir(rootDir, ignoredNames, regexMap["todos"], false, nil, nil)
+	}
+
+	if command == "tests" {
+		tests := 0
+		fmt.Println("\nI found these \033[35mtest files\033[0m in the code:")
+		walkDir(rootDir, ignoredNames, regexMap["todos"], false, nil, &tests)
+		fmt.Printf("\nA total of \033[35m%d test files\033[0m\n", tests)
 	}
 
 	if command == "snitch" {
 		fmt.Println("\nReporting these unreported issues:")
-		walkDir(rootDir, ignoredNames, regexMap["issues"], true, nil)
+		walkDir(rootDir, ignoredNames, regexMap["issues"], true, nil, nil)
 	}
 
 	if command == "issues" {
@@ -113,7 +125,7 @@ func checkEnvs(config *Config) {
 	for envName, envConfigs := range config.Env {
 		ok := parse.CheckEnv(envConfigs)
 		if ok {
-			fmt.Println(envName + " env file seem ok.")
+			fmt.Println("    " + envName + " env file seem ok.")
 		}
 	}
 }
@@ -143,7 +155,7 @@ func searchForPattern(filepath string, pattern *regexp.Regexp, snitch bool, line
 
 		if matched != "" {
 			coloredLine := strings.ReplaceAll(lineText, matched, "\033[35m"+matched+"\033[0m")
-			fmt.Println(path.Join(dirName, fileName), line, coloredLine)
+			fmt.Println("    ", path.Join(dirName, fileName), line, coloredLine)
 			if snitch {
 				reportIssue(lineText)
 			}
@@ -157,19 +169,27 @@ func searchForPattern(filepath string, pattern *regexp.Regexp, snitch bool, line
 }
 
 // walkDir recursively walks through the received directory checking for occurrences of pattern in every file found.
-func walkDir(dirPath string, ignored []string, regexString string, snitch bool, lines *int) {
+func walkDir(dirPath string, ignored []string, regexString string, snitch bool, lines *int, tests *int) {
 	files := getFiles(dirPath, ignored)
 
 	pattern, err := regexp.Compile(regexString)
 	checkErr(err)
 
 	for _, file := range files {
-		filepath := path.Join(dirPath, file.Name())
+		filename := file.Name()
+		filepath := path.Join(dirPath, filename)
 
 		if file.IsDir() {
-			walkDir(filepath, ignored, regexString, snitch, lines)
+			walkDir(filepath, ignored, regexString, snitch, lines, tests)
 		} else {
-			searchForPattern(filepath, pattern, snitch, lines)
+			if tests != nil {
+				if strings.Contains(filename, "test") {
+					fmt.Println("    ", filename)
+					*tests += 1
+				}
+			} else {
+				searchForPattern(filepath, pattern, snitch, lines)
+			}
 		}
 	}
 }
